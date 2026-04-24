@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class GrassManager : MonoBehaviour
 {
@@ -32,7 +33,7 @@ public class GrassManager : MonoBehaviour
             {   
                 Vector3 pos = new Vector3(x * stepAmount, 0, (y * stepAmount));
             
-                Matrix4x4 mat = Matrix4x4.TRS(pos, Quaternion.identity, grassScale);
+                Matrix4x4 mat = Matrix4x4.TRS(pos, Quaternion.Euler(Random.Range(0,15), Random.Range(0,180), Random.Range(0,15)), grassScale *(Random.Range(1,1.2f)));
                 
                 currentBatch.Add(mat);
 
