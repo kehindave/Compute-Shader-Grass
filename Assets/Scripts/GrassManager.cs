@@ -11,11 +11,10 @@ public class GrassManager : MonoBehaviour
 
     [SerializeField] private Terrain terrain;
     [SerializeField] private int grassDensity = 50;
-    [SerializeField] private Vector3 grassScale;
+    [SerializeField] private Vector3 grassScale, grassOffset;
     [SerializeField] private Mesh grassMesh;
     [SerializeField] private Material grassMaterial;
     private List<Matrix4x4[]> batches = new List<Matrix4x4[]>();
-
     void Start()
     {
         GenerateGrass(new Vector2Int((int)terrain.terrainData.size.x,(int)terrain.terrainData.size.z));
@@ -23,6 +22,8 @@ public class GrassManager : MonoBehaviour
     
     public void GenerateGrass(Vector2Int bounds)
     {
+        batches.Clear();
+       
         float stepAmount = 1 / (float)grassDensity;
         Vector2Int pointsPerSide = new Vector2Int(bounds.x * grassDensity, bounds.y * grassDensity);
         List<Matrix4x4> currentBatch = new List<Matrix4x4>();
@@ -33,7 +34,7 @@ public class GrassManager : MonoBehaviour
             {   
                 Vector3 pos = new Vector3(x * stepAmount, 0, (y * stepAmount));
             
-                Matrix4x4 mat = Matrix4x4.TRS(pos, Quaternion.Euler(Random.Range(0,15), Random.Range(0,180), Random.Range(0,15)), grassScale *(Random.Range(1,1.2f)));
+                Matrix4x4 mat = Matrix4x4.TRS(pos+(grassOffset * Random.Range(0f,1f)), Quaternion.Euler(Random.Range(0,15), Random.Range(0,360), Random.Range(0,15)), grassScale *(Random.Range(1,1.2f)));
                 
                 currentBatch.Add(mat);
 
@@ -56,7 +57,16 @@ public class GrassManager : MonoBehaviour
         // Render every batch every frame
         foreach (var batch in batches)
         {
-            Graphics.DrawMeshInstanced(grassMesh, 0, grassMaterial, batch);
+            Graphics.DrawMeshInstanced(
+                grassMesh, 
+                0, 
+                grassMaterial, 
+                batch, 
+                batch.Length, 
+                null, 
+                UnityEngine.Rendering.ShadowCastingMode.Off, 
+                true
+            );
         }
     }
 }
@@ -65,4 +75,6 @@ public class GrassManager : MonoBehaviour
 public struct GrassBlade
 {
     public Vector3 position;
-}                                 
+}
+
+
