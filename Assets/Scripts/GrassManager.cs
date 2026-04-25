@@ -34,8 +34,6 @@ public class GrassManager : MonoBehaviour
     }
 
     [ContextMenu("Generate Grass")]
-    
-    
     public void GenerateGrass()
     {
         grassBuffer?.Dispose();
