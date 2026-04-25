@@ -20,6 +20,7 @@ public class GrassManager : MonoBehaviour
 
     [SerializeField] private Transform cameraTransform;
     [SerializeField] [Range(-1, 1)] private float viewAngle;
+    [SerializeField] [Range(0, 1)] private float windBlend;
     
     [FormerlySerializedAs("rotationRange")] [SerializeField] private Vector3 grassRotationRange;
     [SerializeField] private int grassDensity = 50, minBladesPerPoint, maxBladesPerPoint;
@@ -29,8 +30,8 @@ public class GrassManager : MonoBehaviour
 
 
     [SerializeField] private float windSpeed = 1, windStrength = 1, windScale = 1,grassBendLerpSpeed;
-    [SerializeField] private Vector2 windDirection = Vector2.one;
-    [SerializeField] private Texture2D windNoiseTexture;
+    [SerializeField] private Vector2 primaryWindDirection,secondaryWindDirection;
+    [SerializeField] private Texture2D primaryWindNoiseTexture, secondaryWindNoiseTexture;
 
     private VisualEffect grassEffect;
     
@@ -96,7 +97,9 @@ public class GrassManager : MonoBehaviour
 
         grassCompute.SetVector("CameraPosition", cameraTransform.position);
         grassCompute.SetVector("CameraForward", cameraTransform.forward);
-        grassCompute.SetVector("WindDirection", windDirection);
+        grassCompute.SetVector("PrimaryWindDirection", primaryWindDirection);
+        grassCompute.SetVector("SecondaryWindDirection", secondaryWindDirection);
+        grassCompute.SetFloat("WindBlend", windBlend);
         grassCompute.SetFloat("ViewAngle", viewAngle);
         grassCompute.SetFloat("WindSpeed", windSpeed);
         grassCompute.SetFloat("WindStrength", windStrength);
@@ -107,7 +110,8 @@ public class GrassManager : MonoBehaviour
         grassCompute.SetInt("GrassCount", grassCount);
 
         grassCompute.SetBuffer(updateGrassKernelIndex, "GrassBuffer", grassBuffer);
-        grassCompute.SetTexture(updateGrassKernelIndex, "WindNoiseTexture", windNoiseTexture);
+        grassCompute.SetTexture(updateGrassKernelIndex, "PrimaryWindNoiseTexture", primaryWindNoiseTexture);
+        grassCompute.SetTexture(updateGrassKernelIndex, "SecondaryWindNoiseTexture", secondaryWindNoiseTexture);
         // Dispatch based on your total grass count
         int groups = Mathf.CeilToInt(grassCount / 64f);
         grassCompute.Dispatch(updateGrassKernelIndex, groups, 1, 1);

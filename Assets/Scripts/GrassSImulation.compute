@@ -16,9 +16,16 @@ float ViewAngle;
 float WindSpeed;
 float WindStrength;
 float WindScale;
-float2 WindDirection;
-Texture2D<float4> WindNoiseTexture;
-SamplerState sampler_WindNoiseTexture;
+float2 PrimaryWindDirection;
+float2 SecondaryWindDirection;
+Texture2D<float4> PrimaryWindNoiseTexture;
+SamplerState sampler_PrimaryWindNoiseTexture;
+
+Texture2D<float4> SecondaryWindNoiseTexture;
+SamplerState sampler_SecondaryWindNoiseTexture;
+
+float WindBlend;
+
 
 [numthreads(64,1,1)]
 void UpdateGrass(uint3 id : SV_DispatchThreadID)
@@ -57,13 +64,19 @@ void UpdateGrass(uint3 id : SV_DispatchThreadID)
         pushDirection.x * MaxPushTilt, 
         0, 
         pushDirection.z * MaxPushTilt/2
-    );    float2 uv = (pos.xz * WindScale) + (Time * WindSpeed * WindDirection);
-    float windSample = WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv,0).r;
-    float3 windOffset = float3(
-        windSample * WindStrength, 
-        0, 
-        windSample * (WindStrength * 0.5f)
     );
+    float2 uv1 = (pos.xz * WindScale) + (Time * WindSpeed * PrimaryWindDirection);
+    float2 uv2 = (pos.xz * WindScale) + (Time * WindSpeed * SecondaryWindDirection);
+    float rawWind1 = PrimaryWindNoiseTexture.SampleLevel(sampler_PrimaryWindNoiseTexture, uv1, 0).r;
+    float rawWind2 = SecondaryWindNoiseTexture.SampleLevel(sampler_SecondaryWindNoiseTexture, uv2, 0).r;
+
+    float combinedWind = lerp(rawWind1, rawWind2, WindBlend);
+
+   
+    float2 blendedDir = lerp(PrimaryWindDirection, SecondaryWindDirection, WindBlend);
+    
+   
+    float3 windOffset = float3(blendedDir.x, 0, blendedDir.y) * combinedWind * WindStrength;
     float3 targetWindRotation =  initialRotation+ windOffset;
     float3 frameTarget = lerp(targetWindRotation, pushedRot, interactionStrength);
 
