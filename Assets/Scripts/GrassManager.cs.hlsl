@@ -9,7 +9,8 @@
 struct GrassData
 {
     float3 position;
-    float3 rotation;
+    float3 initialRotation;
+    float3 currentRotation;
     float isVisible;
     float size;
 };

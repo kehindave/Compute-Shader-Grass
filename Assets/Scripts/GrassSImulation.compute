@@ -8,6 +8,9 @@ float3 Rotation;
 float3 CameraForward;
 float PlayerInfluenceRadius;
 float ViewAngle;
+float Time;
+float WindSpeed;
+float WindStrength;
 uint GrassCount;
 
 [numthreads(64,1,1)]
@@ -33,4 +36,12 @@ void UpdateGrass(uint3 id : SV_DispatchThreadID)
     {
         return;
     }
+    float windSample = sin(Time * WindSpeed + (pos.x + pos.z) * 0.5f);
+    float3 windOffset = float3(
+        windSample * WindStrength, 
+        0, 
+        windSample * (WindStrength * 0.5f)
+    );
+
+    GrassBuffer[id.x].currentRotation = GrassBuffer[id.x].initialRotation + windOffset;
 }

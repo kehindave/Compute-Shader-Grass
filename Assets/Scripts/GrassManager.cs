@@ -15,7 +15,8 @@ public class GrassManager : MonoBehaviour
     [SerializeField] private Vector3 rotationRange;
 
     [SerializeField] private Transform cameraTransform;
-    [SerializeField] [Range(-1,1)]private float viewAngle;
+    [SerializeField] [Range(-1, 1)] private float viewAngle;
+    [SerializeField] private float windSpeed = 1, windStrength = 1;
     
     [SerializeField] private ComputeShader grassCompute;
     [SerializeField] private Terrain terrain;
@@ -57,7 +58,7 @@ public class GrassManager : MonoBehaviour
                     blades.Add(new GrassData()
                     {
                         position = pos +(grassPositionRandomness * Random.Range(-1f,1f)),
-                        rotation = GetRandomRotation(),
+                        initialRotation = GetRandomRotation(),
                         size = Random.Range(grassSize,grassSize*1.2f)
                     
                     });
@@ -82,6 +83,9 @@ public class GrassManager : MonoBehaviour
         grassCompute.SetVector("CameraPosition", cameraTransform.position);
         grassCompute.SetVector("CameraForward", cameraTransform.forward);
         grassCompute.SetFloat("ViewAngle", viewAngle);
+        grassCompute.SetFloat("WindSpeed", windSpeed);
+        grassCompute.SetFloat("WindStrength", windStrength);
+        grassCompute.SetFloat("Time", Time.time);
         grassCompute.SetInt("GrassCount", grassCount);
 
         grassCompute.SetBuffer(updateGrassKernelIndex, "GrassBuffer", grassBuffer);
@@ -132,7 +136,7 @@ public class GrassManager : MonoBehaviour
                     blades.Add(new GrassData()
                     {
                         position = new Vector3(candidate.x + grassOffset.x, grassOffset.y, candidate.y +grassOffset.z) +(grassPositionRandomness * Random.Range(-1f,1f)),
-                        rotation = GetRandomRotation(),
+                        initialRotation = GetRandomRotation(),
                         size = Random.Range(grassSize,grassSize*1.2f)
                     
                     });
@@ -187,7 +191,8 @@ public class GrassManager : MonoBehaviour
 public struct GrassData
 {
     public Vector3 position;
-    public Vector3 rotation;
+    public Vector3 initialRotation;
+    public Vector3 currentRotation;
     public float isVisible;
     public float size;
 }
