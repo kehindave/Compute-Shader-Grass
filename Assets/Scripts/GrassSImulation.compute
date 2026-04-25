@@ -13,6 +13,7 @@ float Time;
 float WindSpeed;
 float WindStrength;
 float WindScale;
+float2 WindDirection;
 Texture2D<float4> WindNoiseTexture;
 SamplerState sampler_WindNoiseTexture;
 
@@ -40,8 +41,8 @@ void UpdateGrass(uint3 id : SV_DispatchThreadID)
         return;
     }
     //float windSample = sin(Time * WindSpeed + (pos.x + pos.z) * 0.5f);
-    float2 uv = (pos.xz * WindScale) + (Time * WindSpeed);
-    float windSample = WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv, 0).r;
+    float2 uv = (pos.xz * WindScale) + (Time * WindSpeed * WindDirection);
+    float windSample = WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv,0).r;
     float3 windOffset = float3(
         windSample * WindStrength, 
         0, 

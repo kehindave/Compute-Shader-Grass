@@ -12,7 +12,6 @@ using Random = UnityEngine.Random;
 
 public class GrassManager : MonoBehaviour
 {
-    [SerializeField] private Texture2D windNoiseTexture;
     [SerializeField] private Vector3 rotationRange;
 
     [SerializeField] private Transform cameraTransform;
@@ -24,7 +23,11 @@ public class GrassManager : MonoBehaviour
     [SerializeField] private int grassDensity = 50, minBladesPerPoint, maxBladesPerPoint;
     [SerializeField] private Vector3  grassOffset, grassPositionRandomness;
     [FormerlySerializedAs("grassSIze")] [SerializeField] private float grassSize;
-    [SerializeField] private VisualEffect grassEffect;
+
+    [SerializeField] private Vector2 windDirection = Vector2.one;
+    [SerializeField] private Texture2D windNoiseTexture;
+
+    private VisualEffect grassEffect;
     
     private GraphicsBuffer grassBuffer;
     private int grassCount;
@@ -33,6 +36,7 @@ public class GrassManager : MonoBehaviour
 
     private void Start()
     {
+        grassEffect = GetComponent<VisualEffect>();
         updateGrassKernelIndex = grassCompute.FindKernel("UpdateGrass");
 
         GenerateGrass();
@@ -83,6 +87,7 @@ public class GrassManager : MonoBehaviour
         // Pass player data
         grassCompute.SetVector("CameraPosition", cameraTransform.position);
         grassCompute.SetVector("CameraForward", cameraTransform.forward);
+        grassCompute.SetVector("WindDirection", windDirection);
         grassCompute.SetFloat("ViewAngle", viewAngle);
         grassCompute.SetFloat("WindSpeed", windSpeed);
         grassCompute.SetFloat("WindStrength", windStrength);
