@@ -1,13 +1,46 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel UpdateGrass
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-RWTexture2D<float4> Result;
-
-[numthreads(8,8,1)]
-void CSMain(uint3 id : SV_DispatchThreadID)
+struct GrassData
 {
-    float2 uv = id.xy / float2(256.0, 256.0);
-    Result[id.xy] = float4(uv.x, uv.y, 0, 1);
+    float3 position;
+    float3 forward;
+    float3 up;
+    float isVisible;
+    float size;
+};
+RWStructuredBuffer<GrassData> GrassBuffer;
+float3 CameraPosition;
+float3 CameraForward;
+float PlayerInfluenceRadius;
+float ViewAngle;
+uint GrassCount;
+[numthreads(64,1,1)]
+void UpdateGrass(uint3 id : SV_DispatchThreadID)
+{
+    if(id.x >= GrassCount)
+    {
+        return;
+    }
+    // Fetch the blade
+    float3 pos = GrassBuffer[id.x].position;
+    
+    
+    // 2. Direction/FOV Check (Dot Product)
+    float3 dirToBlade = normalize(pos - CameraPosition);
+    float dotProduct = dot(CameraForward, dirToBlade);
+    
+    // Determine visibility
+    // Blade is active if it's within range AND within the view cone
+    bool inFront = dotProduct > ViewAngle; 
+
+    GrassBuffer[id.x].isVisible = inFront ? 1.0f : 0.0f;
+    if(!inFront)
+    {
+        return;
+    }
 }
+
+
+
+

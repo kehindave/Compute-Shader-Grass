@@ -11,18 +11,25 @@ using Random = UnityEngine.Random;
 
 public class GrassManager : MonoBehaviour
 {
+    [SerializeField] private Transform cameraTransform;
+    [SerializeField] [Range(-1,1)]private float viewAngle;
+    
     [SerializeField] private ComputeShader grassCompute;
-
     [SerializeField] private Terrain terrain;
     [SerializeField] private int grassDensity = 50;
     [SerializeField] private Vector3  grassOffset, grassPositionRandomness;
     [FormerlySerializedAs("grassSIze")] [SerializeField] private float grassSize;
     [SerializeField] private VisualEffect grassEffect;
+    
     private GraphicsBuffer grassBuffer;
+    private int grassCount;
+    private int updateGrassKernelIndex;
 
 
     private void Start()
     {
+        updateGrassKernelIndex = grassCompute.FindKernel("UpdateGrass");
+
         GenerateGrass();
     }
 
@@ -52,18 +59,35 @@ public class GrassManager : MonoBehaviour
                 });
             }
         }
-        
-        grassBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, blades.Count, UnsafeUtility.SizeOf<GrassData>());
+
+        grassCount = blades.Count;
+        grassBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, blades.Count,
+            UnsafeUtility.SizeOf<GrassData>());
         grassBuffer.SetData(blades);
-    grassEffect.SetInt("SpawnSize", blades.Count);
-    grassEffect.SetGraphicsBuffer("GrassDataBuffer", grassBuffer);
-    grassEffect.Play();
-    
+        grassEffect.SetInt("SpawnSize", blades.Count);
+        grassEffect.SetGraphicsBuffer("GrassDataBuffer", grassBuffer);
+        grassEffect.Play();
+
     }
 
+    void Update()
+    {
+
+        // Pass player data
+        grassCompute.SetVector("CameraPosition", cameraTransform.position);
+        grassCompute.SetVector("CameraForward", cameraTransform.forward);
+        grassCompute.SetFloat("ViewAngle", viewAngle);
+        grassCompute.SetInt("GrassCount", grassCount);
+
+        grassCompute.SetBuffer(updateGrassKernelIndex, "GrassBuffer", grassBuffer);
+    
+        // Dispatch based on your total grass count
+        int groups = Mathf.CeilToInt(grassCount / 64f);
+        grassCompute.Dispatch(updateGrassKernelIndex, groups, 1, 1);
+    }
     private void OnDestroy()
     {
-        grassBuffer.Dispose();
+        grassBuffer?.Dispose();
     }
 }
 
@@ -74,6 +98,7 @@ public struct GrassData
     public Vector3 position;
     public Vector3 forward;
     public Vector3 up;
+    public float isVisible;
     public float size;
 }
 
