@@ -12,18 +12,23 @@ using Random = UnityEngine.Random;
 
 public class GrassManager : MonoBehaviour
 {
-    [SerializeField] private Vector3 rotationRange;
+    [SerializeField] private ComputeShader grassCompute;
+    [SerializeField] private Terrain terrain;
+
+    [SerializeField] private Transform playerTransform;
+    [SerializeField] private float playerInfluenceRadius=1, maxPushTilt =1;
 
     [SerializeField] private Transform cameraTransform;
     [SerializeField] [Range(-1, 1)] private float viewAngle;
-    [SerializeField] private float windSpeed = 1, windStrength = 1, windScale = 1;
     
-    [SerializeField] private ComputeShader grassCompute;
-    [SerializeField] private Terrain terrain;
+    [FormerlySerializedAs("rotationRange")] [SerializeField] private Vector3 grassRotationRange;
     [SerializeField] private int grassDensity = 50, minBladesPerPoint, maxBladesPerPoint;
     [SerializeField] private Vector3  grassOffset, grassPositionRandomness;
     [FormerlySerializedAs("grassSIze")] [SerializeField] private float grassSize;
+    
 
+
+    [SerializeField] private float windSpeed = 1, windStrength = 1, windScale = 1,grassBendLerpSpeed;
     [SerializeField] private Vector2 windDirection = Vector2.one;
     [SerializeField] private Texture2D windNoiseTexture;
 
@@ -85,6 +90,10 @@ public class GrassManager : MonoBehaviour
     {
 
         // Pass player data
+        grassCompute.SetVector("PlayerPosition", playerTransform.position);
+        grassCompute.SetFloat("PlayerInfluenceRadius", playerInfluenceRadius);
+        grassCompute.SetFloat("MaxPushTilt", maxPushTilt);
+
         grassCompute.SetVector("CameraPosition", cameraTransform.position);
         grassCompute.SetVector("CameraForward", cameraTransform.forward);
         grassCompute.SetVector("WindDirection", windDirection);
@@ -92,6 +101,8 @@ public class GrassManager : MonoBehaviour
         grassCompute.SetFloat("WindSpeed", windSpeed);
         grassCompute.SetFloat("WindStrength", windStrength);
         grassCompute.SetFloat("WindScale", windScale);
+        grassCompute.SetFloat("BendLerpSpeed", grassBendLerpSpeed*Time.deltaTime);
+        
         grassCompute.SetFloat("Time", Time.time);
         grassCompute.SetInt("GrassCount", grassCount);
 
@@ -162,7 +173,7 @@ public class GrassManager : MonoBehaviour
 
     private Vector3 GetRandomRotation()
     {
-        return new Vector3(Random.Range(-rotationRange.x,rotationRange.x), Random.Range(-rotationRange.y, rotationRange.y), Random.Range(-rotationRange.z, rotationRange.z));
+        return new Vector3(Random.Range(-grassRotationRange.x,grassRotationRange.x), Random.Range(-grassRotationRange.y, grassRotationRange.y), Random.Range(-grassRotationRange.z, grassRotationRange.z));
     }
 
     private static bool IsValid(Vector2 p, Vector2 bounds, float cellSize, float minDist, Vector2?[,] grid)

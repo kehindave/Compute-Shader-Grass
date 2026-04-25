@@ -3,12 +3,15 @@
 
 #include "GrassManager.cs.hlsl"
 RWStructuredBuffer<GrassData> GrassBuffer;
+float Time;
+float BendLerpSpeed;
 uint GrassCount;
 float3 CameraPosition;
 float3 CameraForward;
+float3 PlayerPosition;
 float PlayerInfluenceRadius;
+float MaxPushTilt;
 float ViewAngle;
-float Time;
 
 float WindSpeed;
 float WindStrength;
@@ -40,14 +43,31 @@ void UpdateGrass(uint3 id : SV_DispatchThreadID)
     {
         return;
     }
+    float3 initialRotation= GrassBuffer[id.x].initialRotation;
+    float3 previousRotation= GrassBuffer[id.x].currentRotation;
     //float windSample = sin(Time * WindSpeed + (pos.x + pos.z) * 0.5f);
-    float2 uv = (pos.xz * WindScale) + (Time * WindSpeed * WindDirection);
+    float3 dirFromPlayer = pos - PlayerPosition;
+    float distance = length(dirFromPlayer);
+
+    float interactionStrength = saturate(1.0 - (distance / PlayerInfluenceRadius));
+    interactionStrength = pow(interactionStrength, 2.0);
+    
+    float3 pushDirection = normalize(float3(dirFromPlayer.x, 0.0001f, dirFromPlayer.z));
+    float3 pushedRot = initialRotation + float3(
+        pushDirection.x * MaxPushTilt, 
+        0, 
+        pushDirection.z * MaxPushTilt/2
+    );    float2 uv = (pos.xz * WindScale) + (Time * WindSpeed * WindDirection);
     float windSample = WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv,0).r;
     float3 windOffset = float3(
         windSample * WindStrength, 
         0, 
         windSample * (WindStrength * 0.5f)
     );
+    float3 targetWindRotation =  initialRotation+ windOffset;
+    float3 frameTarget = lerp(targetWindRotation, pushedRot, interactionStrength);
 
-    GrassBuffer[id.x].currentRotation = GrassBuffer[id.x].initialRotation + windOffset;
+   
+    float t = saturate(BendLerpSpeed);
+    GrassBuffer[id.x].currentRotation = lerp(previousRotation, frameTarget, t);
 }
