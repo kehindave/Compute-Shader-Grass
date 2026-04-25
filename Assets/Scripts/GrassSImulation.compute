@@ -3,15 +3,18 @@
 
 #include "GrassManager.cs.hlsl"
 RWStructuredBuffer<GrassData> GrassBuffer;
+uint GrassCount;
 float3 CameraPosition;
-float3 Rotation;
 float3 CameraForward;
 float PlayerInfluenceRadius;
 float ViewAngle;
 float Time;
+
 float WindSpeed;
 float WindStrength;
-uint GrassCount;
+float WindScale;
+Texture2D<float4> WindNoiseTexture;
+SamplerState sampler_WindNoiseTexture;
 
 [numthreads(64,1,1)]
 void UpdateGrass(uint3 id : SV_DispatchThreadID)
@@ -36,7 +39,9 @@ void UpdateGrass(uint3 id : SV_DispatchThreadID)
     {
         return;
     }
-    float windSample = sin(Time * WindSpeed + (pos.x + pos.z) * 0.5f);
+    //float windSample = sin(Time * WindSpeed + (pos.x + pos.z) * 0.5f);
+    float2 uv = (pos.xz * WindScale) + (Time * WindSpeed);
+    float windSample = WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv, 0).r;
     float3 windOffset = float3(
         windSample * WindStrength, 
         0, 

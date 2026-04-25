@@ -12,11 +12,12 @@ using Random = UnityEngine.Random;
 
 public class GrassManager : MonoBehaviour
 {
+    [SerializeField] private Texture2D windNoiseTexture;
     [SerializeField] private Vector3 rotationRange;
 
     [SerializeField] private Transform cameraTransform;
     [SerializeField] [Range(-1, 1)] private float viewAngle;
-    [SerializeField] private float windSpeed = 1, windStrength = 1;
+    [SerializeField] private float windSpeed = 1, windStrength = 1, windScale = 1;
     
     [SerializeField] private ComputeShader grassCompute;
     [SerializeField] private Terrain terrain;
@@ -85,11 +86,12 @@ public class GrassManager : MonoBehaviour
         grassCompute.SetFloat("ViewAngle", viewAngle);
         grassCompute.SetFloat("WindSpeed", windSpeed);
         grassCompute.SetFloat("WindStrength", windStrength);
+        grassCompute.SetFloat("WindScale", windScale);
         grassCompute.SetFloat("Time", Time.time);
         grassCompute.SetInt("GrassCount", grassCount);
 
         grassCompute.SetBuffer(updateGrassKernelIndex, "GrassBuffer", grassBuffer);
-    
+        grassCompute.SetTexture(updateGrassKernelIndex, "WindNoiseTexture", windNoiseTexture);
         // Dispatch based on your total grass count
         int groups = Mathf.CeilToInt(grassCount / 64f);
         grassCompute.Dispatch(updateGrassKernelIndex, groups, 1, 1);
