@@ -52,7 +52,7 @@ public class GrassManager : MonoBehaviour
                 blades.Add(new GrassData()
                 {
                     position = pos +(grassPositionRandomness * Random.Range(-1f,1f)),
-                    up = new Vector3(Random.Range(-0.15f,0.15f), 1, Random.Range(-0.15f,0.15f)),
+                    up = new Vector3(Random.Range(-1f,1f), Random.Range(0.5f,1f), Random.Range(-1f,1f)).normalized,
                     forward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)),
                     size = Random.Range(grassSize,grassSize*1.2f)
                     
