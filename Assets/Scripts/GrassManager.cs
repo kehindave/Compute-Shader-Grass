@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityEngine.VFX;
@@ -11,12 +12,14 @@ using Random = UnityEngine.Random;
 
 public class GrassManager : MonoBehaviour
 {
+    [SerializeField] private Vector3 rotationRange;
+
     [SerializeField] private Transform cameraTransform;
     [SerializeField] [Range(-1,1)]private float viewAngle;
     
     [SerializeField] private ComputeShader grassCompute;
     [SerializeField] private Terrain terrain;
-    [SerializeField] private int grassDensity = 50;
+    [SerializeField] private int grassDensity = 50, minBladesPerPoint, maxBladesPerPoint;
     [SerializeField] private Vector3  grassOffset, grassPositionRandomness;
     [FormerlySerializedAs("grassSIze")] [SerializeField] private float grassSize;
     [SerializeField] private VisualEffect grassEffect;
@@ -47,16 +50,19 @@ public class GrassManager : MonoBehaviour
             for (int y = 0; y < pointsPerSide.y; y++)
             {   
                 Vector3 pos = new Vector3(x * stepAmount, 0, (y * stepAmount)) +grassOffset;
-                float angle = Random.Range(0, Mathf.PI * 2);
-        
-                blades.Add(new GrassData()
+                var numOfBlades = Random.Range(minBladesPerPoint, maxBladesPerPoint + 1);
+
+                for (int i = 0; i < numOfBlades; i++)
                 {
-                    position = pos +(grassPositionRandomness * Random.Range(-1f,1f)),
-                    up = new Vector3(Random.Range(-1f,1f), Random.Range(0.5f,1f), Random.Range(-1f,1f)).normalized,
-                    forward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)),
-                    size = Random.Range(grassSize,grassSize*1.2f)
+                    blades.Add(new GrassData()
+                    {
+                        position = pos +(grassPositionRandomness * Random.Range(-1f,1f)),
+                        rotation = GetRandomRotation(),
+                        size = Random.Range(grassSize,grassSize*1.2f)
                     
-                });
+                    });
+                }
+                
             }
         }
         grassCount = blades.Count;
@@ -126,8 +132,7 @@ public class GrassManager : MonoBehaviour
                     blades.Add(new GrassData()
                     {
                         position = new Vector3(candidate.x + grassOffset.x, grassOffset.y, candidate.y +grassOffset.z) +(grassPositionRandomness * Random.Range(-1f,1f)),
-                        up = new Vector3(Random.Range(-0.15f,0.15f), 1, Random.Range(-0.15f,0.15f)),
-                        forward = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)),
+                        rotation = GetRandomRotation(),
                         size = Random.Range(grassSize,grassSize*1.2f)
                     
                     });
@@ -142,6 +147,11 @@ public class GrassManager : MonoBehaviour
         }
 
         return blades;
+    }
+
+    private Vector3 GetRandomRotation()
+    {
+        return new Vector3(Random.Range(-rotationRange.x,rotationRange.x), Random.Range(-rotationRange.y, rotationRange.y), Random.Range(-rotationRange.z, rotationRange.z));
     }
 
     private static bool IsValid(Vector2 p, Vector2 bounds, float cellSize, float minDist, Vector2?[,] grid)
@@ -171,13 +181,13 @@ public class GrassManager : MonoBehaviour
     }
 }
 
+[GenerateHLSL(needAccessors = false)]
 [StructLayout(LayoutKind.Sequential)]
 [VFXType(VFXTypeAttribute.Usage.GraphicsBuffer)]
 public struct GrassData
 {
     public Vector3 position;
-    public Vector3 forward;
-    public Vector3 up;
+    public Vector3 rotation;
     public float isVisible;
     public float size;
 }
