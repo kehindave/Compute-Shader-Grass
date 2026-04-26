@@ -26,10 +26,16 @@ public class GrassManager : MonoBehaviour
     [SerializeField] private int grassDensity = 50, minBladesPerPoint, maxBladesPerPoint;
     [SerializeField] private Vector3  grassOffset, grassPositionRandomness;
     [FormerlySerializedAs("grassSIze")] [SerializeField] private float grassSize;
-    
 
 
-    [SerializeField] private float windSpeed = 1, windStrength = 1, windScale = 1,grassBendLerpSpeed;
+
+    [SerializeField] private float primaryWindSpeed = 1;
+    [SerializeField] private float primaryWindStrength = 1;
+    [SerializeField] private float primaryWindScale = 1;
+    [SerializeField] private float secondaryWindSpeed = 1;
+    [SerializeField] private float secondaryWindStrength = 1;
+    [SerializeField] private float secondaryWindScale = 1;
+    [SerializeField] float grassBendLerpSpeed;
     [SerializeField] private Vector2 primaryWindDirection,secondaryWindDirection;
     [SerializeField] private Texture2D primaryWindNoiseTexture, secondaryWindNoiseTexture;
 
@@ -70,7 +76,7 @@ public class GrassManager : MonoBehaviour
                     {
                         position = pos +(grassPositionRandomness * Random.Range(-1f,1f)),
                         initialRotation = GetRandomRotation(),
-                        size = Random.Range(grassSize,grassSize*1.2f)
+                        size = Random.Range(1,1.8f)
                     
                     });
                 }
@@ -101,9 +107,12 @@ public class GrassManager : MonoBehaviour
         grassCompute.SetVector("SecondaryWindDirection", secondaryWindDirection);
         grassCompute.SetFloat("WindBlend", windBlend);
         grassCompute.SetFloat("ViewAngle", viewAngle);
-        grassCompute.SetFloat("WindSpeed", windSpeed);
-        grassCompute.SetFloat("WindStrength", windStrength);
-        grassCompute.SetFloat("WindScale", windScale);
+        grassCompute.SetFloat("PrimaryWindSpeed", primaryWindSpeed);
+        grassCompute.SetFloat("PrimaryWindStrength", primaryWindStrength);
+        grassCompute.SetFloat("PrimaryWindScale", primaryWindScale);        
+        grassCompute.SetFloat("SecondaryWindSpeed", secondaryWindSpeed);
+        grassCompute.SetFloat("SecondaryWindStrength", secondaryWindStrength);
+        grassCompute.SetFloat("SecondaryWindScale", secondaryWindScale);
         grassCompute.SetFloat("BendLerpSpeed", grassBendLerpSpeed*Time.deltaTime);
         
         grassCompute.SetFloat("Time", Time.time);

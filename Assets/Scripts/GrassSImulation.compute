@@ -13,9 +13,12 @@ float PlayerInfluenceRadius;
 float MaxPushTilt;
 float ViewAngle;
 
-float WindSpeed;
-float WindStrength;
-float WindScale;
+float PrimaryWindSpeed;
+float PrimaryWindStrength;
+float PrimaryWindScale;
+float SecondaryWindSpeed;
+float SecondaryWindStrength;
+float SecondaryWindScale;
 float2 PrimaryWindDirection;
 float2 SecondaryWindDirection;
 Texture2D<float4> PrimaryWindNoiseTexture;
@@ -52,31 +55,27 @@ void UpdateGrass(uint3 id : SV_DispatchThreadID)
     }
     float3 initialRotation= GrassBuffer[id.x].initialRotation;
     float3 previousRotation= GrassBuffer[id.x].currentRotation;
-    //float windSample = sin(Time * WindSpeed + (pos.x + pos.z) * 0.5f);
     float3 dirFromPlayer = pos - PlayerPosition;
-    float distance = length(dirFromPlayer);
-
-    float interactionStrength = saturate(1.0 - (distance / PlayerInfluenceRadius));
+    float dist2D = length(float2(dirFromPlayer.x, dirFromPlayer.z));
+    float interactionStrength = saturate(1.0 - (dist2D / PlayerInfluenceRadius));
     interactionStrength = pow(interactionStrength, 2.0);
     
-    float3 pushDirection = normalize(float3(dirFromPlayer.x, 0.0001f, dirFromPlayer.z));
-    float3 pushedRot = initialRotation + float3(
-        pushDirection.x * MaxPushTilt, 
-        0, 
-        pushDirection.z * MaxPushTilt/2
+    float2 pushDir = normalize(float2(dirFromPlayer.x, dirFromPlayer.z) + 0.0001f);
+    float3 pushedRot = float3(
+        pushDir.x * MaxPushTilt, 
+        initialRotation.y, 
+        pushDir.y * (MaxPushTilt * 0.5f)
     );
-    float2 uv1 = (pos.xz * WindScale) + (Time * WindSpeed * PrimaryWindDirection);
-    float2 uv2 = (pos.xz * WindScale) + (Time * WindSpeed * SecondaryWindDirection);
+    float2 uv1 = (pos.xz * PrimaryWindScale) + (Time * PrimaryWindSpeed * PrimaryWindDirection);
+    float2 uv2 = (pos.xz * SecondaryWindScale) + (Time * SecondaryWindSpeed * SecondaryWindDirection);
     float rawWind1 = PrimaryWindNoiseTexture.SampleLevel(sampler_PrimaryWindNoiseTexture, uv1, 0).r;
     float rawWind2 = SecondaryWindNoiseTexture.SampleLevel(sampler_SecondaryWindNoiseTexture, uv2, 0).r;
-
-    float combinedWind = lerp(rawWind1, rawWind2, WindBlend);
-
+    float3 force1 = float3(PrimaryWindDirection.x, 0, PrimaryWindDirection.y) * rawWind1 * PrimaryWindStrength;
+    float3 force2 = float3(SecondaryWindDirection.x, 0, SecondaryWindDirection.y) * rawWind2 * SecondaryWindStrength;
+    float3 windOffset = force1 + (force2 * WindBlend);
    
-    float2 blendedDir = lerp(PrimaryWindDirection, SecondaryWindDirection, WindBlend);
     
    
-    float3 windOffset = float3(blendedDir.x, 0, blendedDir.y) * combinedWind * WindStrength;
     float3 targetWindRotation =  initialRotation+ windOffset;
     float3 frameTarget = lerp(targetWindRotation, pushedRot, interactionStrength);
 
